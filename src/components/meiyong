@@ -1,0 +1,253 @@
+<template>
+    <div class="layout">
+        <Layout>
+            <Header>
+                <Menu mode="horizontal" theme="dark" active-name="1">
+                    <div class="layout-logo"></div>
+                    <div class="layout-nav">
+                      <MenuItem name="1" >
+                           <div class="login" @click="(loginName=='登录')?loginShow('登录'):''">
+                           <Icon type="ios-contact" size="25"></Icon>
+                            {{loginName}}
+                           </div>
+                      </MenuItem>
+                       <MenuItem name="2" >
+                           <div class="login" @click="(addUsers=='注册')?loginShow('注册'):quitremind =true">
+                           <Icon type="ios-person-add" v-if="!loginFlag"  size="30"></Icon>
+                           <Icon type="md-walk" v-if="loginFlag" size=25 />
+                            {{addUsers}}
+                           </div>
+                      </MenuItem>
+                      <MenuItem name="3" >
+                      <router-link to="/cart">
+                           <div class="shopCar">
+                             <Icon type="md-cart" size="25"/>
+                            购物车
+                           </div>
+                      </router-link>
+                      </MenuItem>
+                      <MenuItem name="4" >
+                      <router-link to="/CheckOrder">
+                           <div class="shopCar">
+                             <Icon type="md-cart" size="25"/>
+                            查看订单
+                           </div>
+                           </router-link>
+                      </MenuItem>
+                      <MenuItem name="5" >
+                           <div class="shopCar">
+                             <Icon type="ios-settings-outline" size="25" />
+                            设置
+                           </div>
+                      </MenuItem>
+                    </div>
+                </Menu>
+            </Header>
+           
+            
+        </Layout>
+
+<Modal v-model="quitremind" width="25">
+            <p slot="header">
+             <span class="modal-title">退出</span>
+            </p>
+            <Form ref="loginInP">
+            <p>确定要狠心离开么？</p>
+            </Form>
+            <div slot="footer">
+             <Button  @click="resetForm" style="margin-left: 8px">取消</Button>
+             <Button type="primary" @click="loginOut">确定</Button>
+             </div>
+        </Modal>
+         <Modal v-model="loginmodel" >
+            <p slot="header">
+             <span class="modal-title">{{modalshow.loginstatus}}</span>
+            </p>
+            <Form ref="loginInP">
+            <FormItem prop="user" label-position>
+            <Input type="text" v-model="userName" placeholder="Username">
+                <Icon type="ios-person-outline" slot="prepend"></Icon>
+            </Input>
+            </FormItem>
+            <FormItem prop="password">
+            <Input type="password" v-model="userPwd" placeholder="Password">
+                <Icon type="ios-lock-outline" slot="prepend"></Icon>
+            </Input>
+            </FormItem>
+            </Form>
+            <div slot="footer">
+             <Button  @click="resetForm" style="margin-left: 8px">取消</Button>
+             <Button type="primary" @click="(buttonName=='登录')?login():addUser()  ">{{buttonName}}</Button>
+             </div>
+        </Modal>
+    </div>
+</template>
+<script>
+export default {
+  data() {
+    return {
+      modalshow:{loginstatus:"",},
+      loginmodel:false,
+      quitremind:false,
+      loginName:"登录",
+      addUsers:"注册",
+      loginFlag:false,
+      buttonName:"登录",
+      userName:"",
+      userPwd:"",
+      errorTip:false
+    };
+  },
+  methods: {
+    //登录modal
+    loginShow(name) {
+      this.userName="";
+      this.userPwd="";
+      this.buttonName=name;
+      this.loginmodel=true;
+      this.modalshow.loginstatus=name;
+    },
+    //关闭登录注册模块
+    resetForm(){
+         this.loginmodel=false;
+         this.quitremind=false;
+    },
+    //登录事件请求
+    login(){
+      if(this.userName!=''&&this.userPwd!=''){
+        this.$axios.post("/users/login",{
+        userName:this.userName,
+        userPwd:this.userPwd
+      }).then((Response)=>{
+        let res =Response.data;
+        if(res.status=="success"){
+          this.errorTip =false;
+          if(res.Msg=="登陆成功"){
+            this.loginFlag=true,
+            this.addUsers="退出登录"
+             this.$Message.success(res.Msg);
+             this.loginName=res.result.userName
+             this.loginmodel=false;
+          }else if(res.Msg=="用户名或密码错误"){
+           this.$Message.error(res.Msg);
+           this.userName='';
+           this.userPwd='';
+          }if(res.Msg=="用户不存在"){
+           this.$Message.error(res.Msg);
+           this.userName='';
+           this.userPwd='';
+          }
+        }
+      }) 
+        }else{
+             this.$Message.error("请输入用户名及密码");
+             }
+    },
+    //登出
+  loginOut(){
+    this.quitremind=false,
+    this.addUsers="注册";
+    this.loginName="登录";
+    this.loginFlag=false;
+   },
+    //注册
+    addUser(){
+          if(this.userName!=''&&this.userPwd!=''){
+              this.$axios.post("/users/adduser",{
+              addName:this.userName,
+               addPwd:this.userPwd
+              }).then(res=>{
+                if(res.data.Msg=="该用户名已存在"){
+                    this.$Message.error(res.data.Msg);
+                }else if(res.data.Msg=="注册成功"){
+                    this.$Message.success(res.data.Msg);
+                    
+                }
+             
+            })
+        
+            }else{
+           this.$Message.error("请输入用户名及密码");
+            }
+           }
+         },
+  
+};
+
+</script>
+
+
+<style scoped>
+.layout {
+  border: 1px solid #d7dde4;
+  background: #f5f7f9;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.layout-logo {
+  width: 100px;
+  height: 30px;
+  /* background: #5b6270; */
+  border-radius: 3px;
+  float: left;
+  position: relative;
+  top: 15px;
+  left: 20px;
+}
+.layout-nav {
+  width: 600px;
+  margin: 0 auto;
+  margin-right: 1px;
+}
+.layout-header-bar {
+  background: #fff;
+  /* box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1); */
+}
+.ivu-menu-horizontal{
+      height: 35px;
+    line-height: 43px;
+}
+.ivu-layout-header{
+      height: 40px;
+}
+.layout-logo-left {
+  width: 90%;
+  height: 30px;
+  /* background: #5b6270; */
+  border-radius: 3px;
+  margin: 15px auto;
+}
+.menu-icon {
+  transition: all 0.3s;
+}
+.rotate-icon {
+  transform: rotate(-90deg);
+}
+.menu-item span {
+  display: inline-block;
+  overflow: hidden;
+  width: 69px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+  transition: width 0.2s ease 0.2s;
+}
+.menu-item i {
+  transform: translateX(0px);
+  transition: font-size 0.2s ease, transform 0.2s ease;
+  vertical-align: middle;
+  font-size: 16px;
+}
+.collapsed-menu span {
+  width: 0px;
+  transition: width 0.2s ease;
+}
+.collapsed-menu i {
+  transform: translateX(5px);
+  transition: font-size 0.2s ease 0.2s, transform 0.2s ease 0.2s;
+  vertical-align: middle;
+  font-size: 22px;
+}
+
+</style>
